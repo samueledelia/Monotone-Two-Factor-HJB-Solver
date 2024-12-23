@@ -1,10 +1,11 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -std=c++23 -Wall -Wextra -O3
+CXXFLAGS := -std=c++23 -Wall -Wextra -O3 -Iinclude
 
-# Source files and output binary
+# Source and output directories
 SRC_DIR := src
-SRC := $(SRC_DIR)/main.cpp
+INC_DIR := include
+SRC := $(wildcard $(SRC_DIR)/*.cpp)
 BIN := main
 
 # Default target
