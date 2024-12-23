@@ -1,0 +1,22 @@
+# Compiler and flags
+CXX := g++
+CXXFLAGS := -std=c++23 -Wall -Wextra -O3
+
+# Source files and output binary
+SRC_DIR := src
+SRC := $(SRC_DIR)/main.cpp
+BIN := main
+
+# Default target
+all: $(BIN)
+
+# Compile target
+$(BIN): $(SRC)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+# Clean target
+clean:
+	rm -f $(BIN)
+
+# Phony targets
+.PHONY: all clean
