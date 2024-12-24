@@ -2,7 +2,6 @@
 #define HH__PDESOLVERSHPP_HH
 #include <vector>
 #include <functional>
-#include <Eigen/Sparse>
 
 
 // ! Numerical HJB PDE Solver Class

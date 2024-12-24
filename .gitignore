@@ -1,5 +1,8 @@
 .vscode
 
+# fake main
+main_1.cpp
+
 # makefile aux
 *.dep
 
@@ -43,3 +46,4 @@ main
 *.exe
 *.out
 *.app
+test_runner

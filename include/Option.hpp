@@ -6,7 +6,7 @@
 template<std::floating_point Real>
 class Option {
 public:
-    Option(std::move_only_function<Real(Real, Real)>& payoff,
+    Option(std::function<Real(Real, Real)> payoff,
           const Real r, const std::pair<Real, Real>& sigmas_1,
           const std::pair<Real, Real>& sigmas_2, 
           const std::pair<Real, Real>& rho, const Real expiry);
@@ -15,7 +15,7 @@ public:
 
     Real getExpiry();
 
-    Real getDiscountRate();
+    Real getDiscountRate(); 
 
     std::pair<Real, Real> getSigmas_1();
 
@@ -24,13 +24,14 @@ public:
     std::pair<Real, Real> getRhos();
 
 private:
-    std::move_only_function<Real(Real, Real)> payoff; // strike is in the payoff fn
-    Real r;
-    std::pair<Real, Real> sigmas_1;
-    std::pair<Real, Real> sigmas_2;
-    std::pair<Real, Real> rho;
-    Real expiry;
+    std::function<Real(Real, Real)> payoff_; // strike is in the payoff fn
+    Real r_;
+    std::pair<Real, Real> sigmas_1_;
+    std::pair<Real, Real> sigmas_2_;
+    std::pair<Real, Real> rho_;
+    Real expiry_;
 };
 
 
-#endif // HH_OPTION_HH
+
+#endif // HH_OPTION_HH
