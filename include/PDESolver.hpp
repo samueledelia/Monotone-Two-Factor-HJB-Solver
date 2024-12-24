@@ -2,22 +2,34 @@
 #define HH__PDESOLVERSHPP_HH
 #include <vector>
 #include <functional>
-
+#include <concepts>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/unsupported/Eigen/CXX11/Tensor>
+#include <Option.hpp>
 
 // ! Numerical HJB PDE Solver Class
+template<std::floating_point Real>
 class PDESolver {
-    private:
-
     public:
-        virtual void solve() const=0;
+
+        PDESolver(size_t N1, size_t N2, size_t N_tau, Option<Real>& option);
+
+        void solve();
+
+        Eigen::Tensor<Real, 3> getU();
+    
+    protected:
+        Eigen::Tensor<Real, 3> U_;
+        Option<Real> option_;
 };
 
-class FixedStencil : public PDESolver {
+template<std::floating_point Real>
+class FixedStencil : public PDESolver<Real> {
     public:
         // Constructor
         FixedStencil();
 
-        void solve();
+        void _solve();
 
     private:
 
