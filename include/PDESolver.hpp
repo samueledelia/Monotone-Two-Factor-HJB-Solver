@@ -7,20 +7,33 @@
 #include <eigen3/unsupported/Eigen/CXX11/Tensor>
 #include <Option.hpp>
 
+constexpr uint16_t T_DIM = 3;
+
 // ! Numerical HJB PDE Solver Class
 template<std::floating_point Real>
 class PDESolver {
     public:
 
-        PDESolver(size_t N1, size_t N2, size_t N_tau, Option<Real>& option);
+        PDESolver(const uint32_t N1, const uint32_t N2, const uint32_t N_tau,
+                  Option<Real>& option, std::pair<Real, Real>& S_max, bool is_sup);
 
         void solve();
 
-        Eigen::Tensor<Real, 3> getU();
+        Eigen::Tensor<Real, T_DIM>& getU();
     
     protected:
-        Eigen::Tensor<Real, 3> U_;
+        Eigen::Tensor<Real, T_DIM> initBoundaryConditions();
+
+        Real getSigma1();
+
+        Real getSigma2();
+
+        const uint32_t N1_, N2_, N_tau_;
+        Eigen::Tensor<Real, T_DIM> U_;
         Option<Real> option_;
+        const double dS1_, dS2_;
+        const std::pair<Real, Real> S_max_;
+        bool is_sup_;
 };
 
 template<std::floating_point Real>
@@ -29,7 +42,7 @@ class FixedStencil : public PDESolver<Real> {
         // Constructor
         FixedStencil();
 
-        void _solve();
+        void solve() override;
 
     private:
 
