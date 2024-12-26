@@ -1,7 +1,13 @@
 .vscode
+.idea
+obj/*
+cmake-build-debug
 
 # fake main
 main_1.cpp
+
+# cmake stuff
+CMakeLists.txt
 
 # makefile aux
 *.dep
