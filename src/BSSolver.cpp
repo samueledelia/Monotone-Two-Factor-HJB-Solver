@@ -5,8 +5,9 @@ using Triplet = Eigen::Triplet<double>;
 
 template<std::floating_point Real>
 BSSolver<Real>::BSSolver(const uint32_t N1, const uint32_t N_tau,
-                  Option<Real>& option, Real S_max)
-    : PDESolver<Real, BS_T_DIM>(option, N_tau), N_(N1), dS_(S_max / N1), dt_(1.0 / N_tau), S_max_(S_max)
+                  std::unique_ptr<OneAssetOption<Real>> option, Real S_max)
+    : PDESolver<Real, BS_T_DIM>(N_tau, std::move(option)), N_(N1), dS_(S_max / N1),
+    dt_(1.0 / N_tau), S_max_(S_max)
 {
     //this->U_ = BSSolver<Real>::initBoundaryConditions();
     S_ = (Eigen::VectorXd::LinSpaced(N_, 0, N_) * dS_).array();
@@ -17,7 +18,7 @@ template <std::floating_point Real>
 void BSSolver<Real>::solve()
 {
     double sigma = getSigma();
-    double r = this->option_.getDiscountRate();
+    double r = this->option_->getDiscountRate();
 
     Vector I = Eigen::VectorXd::LinSpaced(N_, 0, N_);
     Eigen::VectorXd alpha = 0.25 * dt_ * ((sigma * sigma * I.array().square()).matrix() - r * I);
@@ -75,17 +76,17 @@ Eigen::Tensor<Real, BS_T_DIM> BSSolver<Real>::initBoundaryConditions()
 {
     Eigen::Tensor<Real, BS_T_DIM> U(N_, this->N_tau_);
     U.setZero();
-    double r = this->option_.getDiscountRate();
-    double expiration = this->option_.getExpiry();
+    double r = this->option_->getDiscountRate();
+    double expiration = this->option_->getExpiry();
 
     // Initialize payoff and boundary conditions
     for (uint32_t i = 0; i < N_; ++i) {
-        U(i, this->N_tau_ - 1) = this->option_.evaluate(S_(i), 0.0); //FIXME: only one asset option
+        U(i, this->N_tau_ - 1) = this->option_->evaluate(S_(i));
     }
     for (uint32_t t = 0; t <= this->N_tau_; ++t) {
         double time = t * dt_;
-        U(N_ - 1, t) = this->option_.evaluate(S_max_, 0.0) * std::exp(-r * (expiration - time));//FIXME: only one asset option
-        U(0, t) = this->option_.evaluate(0.0, 0.0) * std::exp(-r * (expiration - time));
+        U(N_ - 1, t) = this->option_->evaluate(S_max_) * std::exp(-r * (expiration - time));
+        U(0, t) = this->option_->evaluate(0.0) * std::exp(-r * (expiration - time));
     }
 
     return U;
@@ -95,18 +96,17 @@ template <std::floating_point Real>
 Eigen::MatrixXd BSSolver<Real>::initBoundaryConditions_()
 {
     Eigen::MatrixXd V = Eigen::MatrixXd::Zero(N_, this->N_tau_);
-    double r = this->option_.getDiscountRate();
-    double expiration = this->option_.getExpiry();
+    double r = this->option_->getDiscountRate();
+    double expiration = this->option_->getExpiry();
 
     // Initialize payoff and boundary conditions
     for (uint32_t i = 0; i < N_; ++i) {
-        auto s = S_(i);
-        V(i, this->N_tau_ - 1) = this->option_.evaluate(s, 0.0); //FIXME: only one asset option
+        V(i, this->N_tau_ - 1) = this->option_->evaluate(S_(i));
     }
     for (uint32_t t = 0; t < this->N_tau_; ++t) {
         double time = t * dt_;
-        V(N_ - 1, t) = this->option_.evaluate(S_max_, 0.0) * std::exp(-r * (expiration - time));//FIXME: only one asset option
-        V(0, t) = this->option_.evaluate(0.0, 0.0) * std::exp(-r * (expiration - time));
+        V(N_ - 1, t) = this->option_->evaluate(S_max_) * std::exp(-r * (expiration - time));
+        V(0, t) = this->option_->evaluate(0.0) * std::exp(-r * (expiration - time));
     }
 
     return V;
@@ -115,7 +115,7 @@ Eigen::MatrixXd BSSolver<Real>::initBoundaryConditions_()
 template <std::floating_point Real>
 Real BSSolver<Real>::getSigma()
 {
-    return this->option_.getSigmas_1().first;
+    return this->option_->getSigma();
 }
 
 template class BSSolver<double>;

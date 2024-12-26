@@ -8,7 +8,7 @@ class HJBSolver : public PDESolver<Real, HJB_T_DIM>
 public:
     
     HJBSolver(const uint32_t N1, const uint32_t N2, const uint32_t N_tau,
-                  Option<Real>& option, std::pair<Real, Real>& S_max, bool is_sup);
+                  std::unique_ptr<TwoAssetMinMaxOption<Real>> option, std::pair<Real, Real>& S_max, bool is_sup);
     
     void solve();
 

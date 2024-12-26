@@ -12,7 +12,7 @@ class BSSolver : public PDESolver<Real, BS_T_DIM>
 {
 public:
     BSSolver(uint32_t N1, uint32_t N_tau,
-             Option<Real>& option, Real S_max);
+             std::unique_ptr<OneAssetOption<Real>> option, Real S_max);
 
     void solve();
 

@@ -1,10 +1,11 @@
 #include "HJBSolver.hpp"
 
 template <std::floating_point Real>
-HJBSolver<Real>::HJBSolver(const uint32_t N1, const uint32_t N2, const uint32_t N_tau, Option<Real>& option,
+HJBSolver<Real>::HJBSolver(const uint32_t N1, const uint32_t N2, const uint32_t N_tau,
+    std::unique_ptr<TwoAssetMinMaxOption<Real>> option,
     std::pair<Real, Real>& S_max, bool is_sup)
-    : PDESolver<Real, HJB_T_DIM>(option, N_tau), N1_(N1), N2_(N2), dS1_(S_max.first / N1), dS2_(S_max.second / N2),
-      S_max_(S_max), is_sup_(is_sup)
+    : PDESolver<Real, HJB_T_DIM>(std::move(option), N_tau), N1_(N1), N2_(N2),
+    dS1_(S_max.first / N1), dS2_(S_max.second / N2), S_max_(S_max), is_sup_(is_sup)
 {
     this->U_ = HJBSolver<Real>::initBoundaryConditions();
 }
@@ -14,10 +15,10 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
 {
     Eigen::Tensor<Real, HJB_T_DIM> U(this->N_tau_, N1_, N2_);
     U.setZero();
-    Real r = this->option_.getDiscountRate();
+    Real r = this->option_->getDiscountRate();
     Real sigma1 = getSigma1();
     Real sigma2 = getSigma2();
-    Real dt = this->option_.getExpiry() / this->N_tau_;
+    Real dt = this->option_->getExpiry() / this->N_tau_;
     auto finite_diff_bs = [&dt](Real S, Real dS, Real sigma,
                              Real r, Real up, Real cen, Real down){
         return cen + dt *(
@@ -34,11 +35,11 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
         {
             auto S1 = i * dS1_;
             auto S2 = j * dS2_;
-            U(this->N_tau_ - 1, i, j) = this->option_.evaluate(S1, S2);
+            U(this->N_tau_ - 1, i, j) = this->option_->evaluate(S1, S2);
         }
     }
 
-    U(0, 0, 0) = std::exp(-r) * this->option_.evaluate(0, 0);
+    U(0, 0, 0) = std::exp(-r) * this->option_->evaluate(0, 0);
 
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
@@ -70,13 +71,14 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
 template <std::floating_point Real>
 Real HJBSolver<Real>::getSigma1()
 {
-    return is_sup_ ? this->option_.getSigmas_1().second : this->option_.getSigmas_1().first;
+    return is_sup_ ? this->option_->getSigmas_1().second : this->option_->getSigmas_1().first;
 }
 
 template <std::floating_point Real>
 Real HJBSolver<Real>::getSigma2()
 {
-    return is_sup_ ? this->option_.getSigmas_2().second : this->option_.getSigmas_2().first;
+    return is_sup_ ? this->option_->getSigmas_2().second : this->option_->getSigmas_2().first;
 }
 
 template class HJBSolver<double>;
+
