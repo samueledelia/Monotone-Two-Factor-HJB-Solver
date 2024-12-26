@@ -22,10 +22,10 @@ To run this project, you will need the following:
 
 ### Cloning the Repository
 
-Clone the repository from [here](https://github.com/diantonioandrea/pacs-project):
+Clone the repository from [here](https://github.com/samueledelia/Monotone-Two-Factor-HJB-Solver.git):
 
 ```bash
-git clone git@github.com:diantonioandrea/pacs-project.git
+git clone git@github.com:samueledelia/Monotone-Two-Factor-HJB-Solver.git
 ```
 
 ### Compilation and Execution
