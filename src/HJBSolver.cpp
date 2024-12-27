@@ -1,5 +1,4 @@
 #include "HJBSolver.hpp"
-
 #include <BSSolver.hpp>
 
 template <std::floating_point Real>
@@ -19,11 +18,6 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
     U.setZero();
     Real r = this->option_->getDiscountRate();
 
-    // Correct initial conditions for c0, c1, c2
-    Real c0 = this->option_->evaluate(S_max_.first, S_max_.second);
-    Real c1 = (this->option_->evaluate(S_max_.first, 0) - c0) / S_max_.first;
-    Real c2 = (this->option_->evaluate(0, S_max_.second) - c0) / S_max_.second;
-
     // Boundary condition at expiry
     for (uint32_t i = 0; i < N1_; ++i)
     {
@@ -39,21 +33,15 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
 
     // Boundary condition for S2 = 0
     auto payoff = [this](Real S1) { return this->option_->evaluate(S1, 0); };
-
-    // Create a OneAssetOption for S2 = 0
     auto bs_option = std::make_unique<OneAssetOption<Real>>(payoff, r, this->option_->getSigmas_1().second, this->option_->getExpiry()); //GETSIGMA MIN OR MAX?
-
-    // Instantiate and solve BSSolver
     BSSolver<Real> bs_solver(N1_, this->N_tau_, std::move(bs_option), S_max_.first);
-    bs_solver.solve();
 
-    // Extract the 2D matrix for S2 = 0
+    bs_solver.solve();
     Eigen::Tensor V = bs_solver.getU();
 
-    // Assign values to U for S2 = 0
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
-        for (uint32_t i = 0; i < N1_ - 1; ++i) // loop boundary are correct?
+        for (uint32_t i = 0; i < N1_ - 1; ++i)
         {
             U(t, i, 0) = V(i, t);
         }
@@ -61,36 +49,31 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
 
     // Boundary condition for S1 = 0
     auto payoff_S2 = [this](Real S2) { return this->option_->evaluate(0, S2); };
-
-    // Create a OneAssetOption for S1 = 0
     auto bs_option_S2 = std::make_unique<OneAssetOption<Real>>(payoff_S2, r, this->option_->getSigmas_2().second, this->option_->getExpiry()); //GETSIGMA MIN OR MAX?
-
-    // Instantiate and solve BSSolver for S1 = 0
     BSSolver<Real> bs_solver_S2(N2_, this->N_tau_, std::move(bs_option_S2), S_max_.second);
-    bs_solver_S2.solve();
 
-    // Extract the 2D matrix for S1 = 0
+    bs_solver_S2.solve();
     Eigen::Tensor V_S2 = bs_solver_S2.getU();
 
-    // Assign values to U for S1 = 0
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
-        for (uint32_t j = 0; j < N2_ - 1; ++j)  // loop boundary are correct?
+        for (uint32_t j = 0; j < N2_ - 1; ++j)
         {
             U(t, 0, j) = V_S2(j, t);
         }
     }
 
     // Solve the ODEs and update upper(S1_max and S2_max) boundary values
+    // Correct initial conditions for c0, c1, c2
+    Real c0 = this->option_->evaluate(S_max_.first, S_max_.second);
+    Real c1 = (this->option_->evaluate(S_max_.first, 0) - c0) / S_max_.first;
+    Real c2 = (this->option_->evaluate(0, S_max_.second) - c0) / S_max_.second;
+    Real dt = this->option_->getExpiry() / this->N_tau_;
+
     for (uint32_t t = this->N_tau_ - 2; t > 0; --t)
     {
-        // Update coefficients
-        Real dt = this->option_->getExpiry() / this->N_tau_;
         c0 *= std::exp(-r * dt);
-        //c1 *= std::exp(-q1 * dt);
-        //c2 *= std::exp(-q2 * dt);
 
-        // Apply upper boundary condition
         for (uint32_t i = 0; i < N1_; ++i)
         {
             auto S1 = i * dS1_;

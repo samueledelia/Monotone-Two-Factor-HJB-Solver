@@ -63,5 +63,4 @@ TEST(BSSolverTest, BasicBSSolverAssertion)
     EXPECT_EQ(U( 46, N_tau - 1), 2.2222222222222143);
     EXPECT_NEAR(U(49, N_tau - 4), 10.6554518837178, TOL);
     EXPECT_NEAR(U(55, N_tau - 10), 25.112095569616265, TOL);
-
 }
