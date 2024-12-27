@@ -23,18 +23,20 @@ TEST(PDESolverTest, BasicPDESolverAssertion)
 
     auto opt = std::make_unique<TwoAssetMinMaxOption<double>>(payoff_fn, r, sigmas_1, sigmas_2, rhos, expiry);
 
-    const uint32_t N_tau = 252;
+    const uint32_t N_tau = 25;
     const uint32_t N_12 = 91;
     std::pair<double, double> S_max = std::make_pair(400, 400); 
 
     HJBSolver<double> pde_solver(N_12, N_12, N_tau, std::move(opt), S_max, true);
     auto U = pde_solver.getU();
 
+    Eigen::array<int, 2> shuffling({1, 0});
+
     // Check boundary conditions
     EXPECT_EQ(U(N_tau - 1, 0, 0), 0.0);
     EXPECT_EQ(U(N_tau - 1, 23, 22), 1.0989010989011092);
-    EXPECT_EQ(U(N_tau - 1, 23, 0), 1.0989010989011092);
-        //<< std::fixed << std::setprecision(2) << U.chip(0, 2).chip(23, 1);
+    EXPECT_EQ(U(N_tau - 1, 23, 0), 1.0989010989011092) 
+        << std::fixed << std::setprecision(2) << U.chip(0, 2).shuffle(shuffling);
 }
 
 TEST(BSSolverTest, BasicBSSolverAssertion)

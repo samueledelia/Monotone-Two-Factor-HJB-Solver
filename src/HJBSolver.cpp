@@ -18,17 +18,6 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
     Eigen::Tensor<Real, HJB_T_DIM> U(this->N_tau_, N1_, N2_);
     U.setZero();
     Real r = this->option_->getDiscountRate();
-    Real sigma1 = getSigma1();
-    Real sigma2 = getSigma2();
-    Real dt = this->option_->getExpiry() / this->N_tau_;
-    auto finite_diff_bs = [&dt](Real S, Real dS, Real sigma,
-                             Real r, Real up, Real cen, Real down){
-        return cen + dt *(
-            ((sigma * sigma * S * S / 2) * (up - 2 * cen + down) / dS) +
-            (r * S * (up - down) / (2 * dS)) -
-            r * cen
-        );
-    };
 
     // Boundary condition at expiry
     for (uint32_t i = 0; i < N1_; ++i)
@@ -43,27 +32,47 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
 
     U(0, 0, 0) = std::exp(-r) * this->option_->evaluate(0, 0);
 
+    // Boundary condition for S2 = 0
+    auto payoff = [this](Real S1) { return this->option_->evaluate(S1, 0); };
+
+    // Create a OneAssetOption for S2 = 0
+    auto bs_option = std::make_unique<OneAssetOption<Real>>(payoff, r, this->option_->getSigmas_1().second, this->option_->getExpiry()); //GETSIGMA MIN OR MAX?
+
+    // Instantiate and solve BSSolver
+    BSSolver<Real> bs_solver(N1_, this->N_tau_, std::move(bs_option), S_max_.first);
+    bs_solver.solve();
+
+    // Extract the 2D matrix for S2 = 0
+    Eigen::Tensor V = bs_solver.getU();
+
+    // Assign values to U for S2 = 0
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
         for (uint32_t i = 1; i < N1_ - 1; ++i)
         {
-            auto S1 = i * dS1_;
-            auto up = U(t, (i + 1), 0);
-            auto cen = U(t, i, 0);
-            auto down = U(t, (i - 1), 0);
-            U(t + 1, i, 0) = finite_diff_bs(S1, dS1_, sigma1, r, up, cen, down);
+            U(t, i, 0) = V(i, t);
         }
     }
 
+    // Boundary condition for S1 = 0
+    auto payoff_S2 = [this](Real S2) { return this->option_->evaluate(0, S2); };
+
+    // Create a OneAssetOption for S1 = 0
+    auto bs_option_S2 = std::make_unique<OneAssetOption<Real>>(payoff_S2, r, this->option_->getSigmas_2().second, this->option_->getExpiry()); //GETSIGMA MIN OR MAX?
+
+    // Instantiate and solve BSSolver for S1 = 0
+    BSSolver<Real> bs_solver_S2(N2_, this->N_tau_, std::move(bs_option_S2), S_max_.second);
+    bs_solver_S2.solve();
+
+    // Extract the 2D matrix for S1 = 0
+    Eigen::Tensor V_S2 = bs_solver_S2.getU();
+
+    // Assign values to U for S1 = 0
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
-        for (uint32_t j = 1; j < N2_ - 1; ++j)
+        for (uint32_t j = 0; j < N2_ - 1; ++j)
         {
-            auto S2 = j * dS2_;
-            auto up = U(t, 0, (j + 1));
-            auto cen = U(t, 0, j);
-            auto down = U(t, 0, (j - 1));
-            U(t + 1, 0, j) = finite_diff_bs(S2, dS2_, sigma2, r, up, cen, down);
+            U(t, 0, j) = V_S2(j, t);
         }
     }
 
