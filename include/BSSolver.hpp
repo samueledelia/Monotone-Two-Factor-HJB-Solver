@@ -16,6 +16,8 @@ public:
 
     void solve();
 
+    Eigen::Tensor<Real, BS_T_DIM>& getU() override;
+
     Eigen::MatrixXd getV();
 
 protected:
@@ -28,4 +30,6 @@ protected:
     const Real S_max_;
     Vector S_;
     Eigen::MatrixXd V_;
+private:
+    Eigen::Tensor<Real, BS_T_DIM> MatrixToTensor(const Eigen::MatrixXd& matrix);
 };

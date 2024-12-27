@@ -1,5 +1,7 @@
 #include "HJBSolver.hpp"
 
+#include <BSSolver.hpp>
+
 template <std::floating_point Real>
 HJBSolver<Real>::HJBSolver(const uint32_t N1, const uint32_t N2, const uint32_t N_tau,
     std::unique_ptr<TwoAssetMinMaxOption<Real>> option,
@@ -81,4 +83,3 @@ Real HJBSolver<Real>::getSigma2()
 }
 
 template class HJBSolver<double>;
-

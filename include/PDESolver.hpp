@@ -9,11 +9,11 @@ template<std::floating_point Real, uint16_t T_DIM>
 class PDESolver {
 public:
 
-    PDESolver(const uint32_t N_tau, OptionBase<Real>& option);
+    PDESolver(OptionBase<Real>& option, const uint32_t N_tau);
 
-    PDESolver(const uint32_t N_tau, std::unique_ptr<OptionBase<Real>> option_ptr);
+    PDESolver(std::unique_ptr<OptionBase<Real>> option_ptr, const uint32_t N_tau);
 
-    Eigen::Tensor<Real, T_DIM>& getU();
+    virtual Eigen::Tensor<Real, T_DIM>& getU();
 
 protected:
     const uint32_t N_tau_;
@@ -23,3 +23,4 @@ protected:
 
 
 #endif //HH__PDESOLVERSHPP_HH
+

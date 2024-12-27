@@ -6,12 +6,12 @@ using Triplet = Eigen::Triplet<double>;
 template<std::floating_point Real>
 BSSolver<Real>::BSSolver(const uint32_t N1, const uint32_t N_tau,
                   std::unique_ptr<OneAssetOption<Real>> option, Real S_max)
-    : PDESolver<Real, BS_T_DIM>(N_tau, std::move(option)), N_(N1), dS_(S_max / N1),
+    : PDESolver<Real, BS_T_DIM>(std::move(option), N_tau), N_(N1), dS_(S_max / N1),
     dt_(1.0 / N_tau), S_max_(S_max)
 {
-    //this->U_ = BSSolver<Real>::initBoundaryConditions();
     S_ = (Eigen::VectorXd::LinSpaced(N_, 0, N_) * dS_).array();
     V_ = initBoundaryConditions_();
+    //this->U_ = initBoundaryConditions();
 }
 
 template <std::floating_point Real>
@@ -66,6 +66,13 @@ void BSSolver<Real>::solve()
 }
 
 template <std::floating_point Real>
+Eigen::Tensor<Real, BS_T_DIM>& BSSolver<Real>::getU()
+{
+    this->U_ = MatrixToTensor(this->V_);
+    return PDESolver<Real, BS_T_DIM>::getU();
+}
+
+template <std::floating_point Real>
 Eigen::MatrixXd BSSolver<Real>::getV()
 {
     return V_;
@@ -116,6 +123,12 @@ template <std::floating_point Real>
 Real BSSolver<Real>::getSigma()
 {
     return this->option_->getSigma();
+}
+
+template <std::floating_point Real>
+Eigen::Tensor<Real, BS_T_DIM> BSSolver<Real>::MatrixToTensor(const Eigen::MatrixXd& matrix)
+{
+    return Eigen::TensorMap<const Eigen::Tensor<const Real, 2>>(matrix.data(), matrix.rows(), matrix.cols());
 }
 
 template class BSSolver<double>;
