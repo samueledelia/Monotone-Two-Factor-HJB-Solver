@@ -5,8 +5,6 @@
 
 constexpr uint16_t BS_T_DIM = 2;
 
-using Vector = Eigen::VectorXd;
-
 template<std::floating_point Real>
 class BSSolver : public PDESolver<Real, BS_T_DIM>
 {

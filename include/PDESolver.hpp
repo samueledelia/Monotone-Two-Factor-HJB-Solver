@@ -5,6 +5,8 @@
 #include <eigen3/unsupported/Eigen/CXX11/Tensor>
 #include <Option.hpp>
 
+using Vector = Eigen::VectorXd;
+
 template<std::floating_point Real, uint16_t T_DIM>
 class PDESolver {
 public:

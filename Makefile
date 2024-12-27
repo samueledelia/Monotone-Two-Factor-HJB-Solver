@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -std=c++20 -Wall -Wextra -O3 -Iinclude -I/usr/local/include
+CXXFLAGS := -std=c++20 -Wall -Wextra -O3 -Iinclude -I/usr/local/include -DTEST_DATA_DIR=\"$(CURDIR)/tests/data\"
 LDFLAGS := -L/usr/local/lib -lgtest -lgtest_main -pthread
 
 # Source and output directories

@@ -20,7 +20,18 @@ protected:
 
     Real getSigma2();
 
+    Real getU_element(size_t i, size_t j) const;
+
+    Real getS1(size_t i) const;
+
+    Real getS2(size_t i) const;
+
+    Real computeGamma(Real rho, uint32_t i, uint32_t j) const;
+
+    //std::vector determineOptimalControl(const Eigen::Tensor<Real, HJB_T_DIM>& W, uint32_t i, uint32_t j); 
+    
     const uint32_t N1_, N2_;
+    Vector S1_, S2_;
     const double dS1_, dS2_;
     const std::pair<Real, Real> S_max_;
     bool is_sup_;
