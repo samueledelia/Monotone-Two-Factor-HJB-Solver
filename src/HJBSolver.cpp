@@ -19,6 +19,11 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
     U.setZero();
     Real r = this->option_->getDiscountRate();
 
+    // Correct initial conditions for c0, c1, c2
+    Real c0 = this->option_->evaluate(S_max_.first, S_max_.second);
+    Real c1 = (this->option_->evaluate(S_max_.first, 0) - c0) / S_max_.first;
+    Real c2 = (this->option_->evaluate(0, S_max_.second) - c0) / S_max_.second;
+
     // Boundary condition at expiry
     for (uint32_t i = 0; i < N1_; ++i)
     {
@@ -48,7 +53,7 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
     // Assign values to U for S2 = 0
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
-        for (uint32_t i = 1; i < N1_ - 1; ++i)
+        for (uint32_t i = 0; i < N1_ - 1; ++i) // loop boundary are correct?
         {
             U(t, i, 0) = V(i, t);
         }
@@ -70,9 +75,31 @@ Eigen::Tensor<Real, HJB_T_DIM> HJBSolver<Real>::initBoundaryConditions()
     // Assign values to U for S1 = 0
     for (uint32_t t = 0; t < this->N_tau_ - 2; ++t)
     {
-        for (uint32_t j = 0; j < N2_ - 1; ++j)
+        for (uint32_t j = 0; j < N2_ - 1; ++j)  // loop boundary are correct?
         {
             U(t, 0, j) = V_S2(j, t);
+        }
+    }
+
+    // Solve the ODEs and update upper(S1_max and S2_max) boundary values
+    for (uint32_t t = this->N_tau_ - 2; t > 0; --t)
+    {
+        // Update coefficients
+        Real dt = this->option_->getExpiry() / this->N_tau_;
+        c0 *= std::exp(-r * dt);
+        //c1 *= std::exp(-q1 * dt);
+        //c2 *= std::exp(-q2 * dt);
+
+        // Apply upper boundary condition
+        for (uint32_t i = 0; i < N1_; ++i)
+        {
+            auto S1 = i * dS1_;
+            U(t, i, N2_ - 1) = c0 + c1 * S1 + c2 * S_max_.second;
+        }
+        for (uint32_t j = 0; j < N2_; ++j)
+        {
+            auto S2 = j * dS2_;
+            U(t, N1_ - 1, j) = c0 + c1 * S_max_.first + c2 * S2;
         }
     }
 
@@ -91,4 +118,8 @@ Real HJBSolver<Real>::getSigma2()
     return is_sup_ ? this->option_->getSigmas_2().second : this->option_->getSigmas_2().first;
 }
 
+template <std::floating_point Real>
+void HJBSolver<Real>::solve(){
+
+}
 template class HJBSolver<double>;
