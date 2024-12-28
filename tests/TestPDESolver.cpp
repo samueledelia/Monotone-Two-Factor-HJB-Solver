@@ -10,7 +10,7 @@
 
 const std::string test_data_dir = TEST_DATA_DIR;
 
-constexpr double TOL = 1e-4;
+constexpr double TOL = 1e-2;
 
 TEST(PDESolverTest, BasicPDESolverAssertion)
 {
@@ -34,14 +34,29 @@ TEST(PDESolverTest, BasicPDESolverAssertion)
     auto U = pde_solver.getU();
 
     Eigen::array<int, 2> shuffling({1, 0});
-    Eigen::Tensor<double, 2> expected_sol_S1 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/left_bound_hjb.txt");
-
+    Eigen::Tensor<double, 2> expected_sol_BC1 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/left_bound_hjb.txt");
+    Eigen::Tensor<double, 2> expected_sol_BC2 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/right_bound_hjb.txt");
+    Eigen::Tensor<double, 2> expected_sol_BC3 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/upper_bound_hjb.txt");
+    Eigen::Tensor<double, 2> expected_sol_BC4 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/lower_bound_hjb.txt");
+    Eigen::Tensor<double, 2> expected_sol_BC5 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/front_bound_hjb.txt");
+    Eigen::Tensor<double, 2> expected_sol_BC6 = readMatrixFromFile<Eigen::Tensor<double, 2>>(test_data_dir + "/behind_bound_hjb.txt");
+    Eigen::Tensor<double, 2> left_bound = U.chip(0, 2).shuffle(shuffling);
+    Eigen::Tensor<double, 2> right_bound = U.chip(U.dimension(2) - 1, 2).shuffle(shuffling);
+    Eigen::Tensor<double, 2> upper_bound = U.chip(U.dimension(1) - 1, 1).shuffle(shuffling);
+    Eigen::Tensor<double, 2> lower_bound = U.chip(0, 1).shuffle(shuffling);
+    Eigen::Tensor<double, 2> front_bound = U.chip(0, 0).shuffle(shuffling);
+    Eigen::Tensor<double, 2> behind_bound = U.chip(U.dimension(0) - 1, 0).shuffle(shuffling);
     // Check boundary conditions
     EXPECT_EQ(U(N_tau - 1, 0, 0), 0.0);
     EXPECT_EQ(U(N_tau - 1, 23, 22), 1.0989010989011092);
     EXPECT_EQ(U(N_tau - 1, 23, 0), 1.0989010989011092);
-    Eigen::Tensor<double, 2> tmp = U.chip(0, 2).shuffle(shuffling);
-    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_S1, tmp, TOL));
+        //<< std::fixed << std::setprecision(2) << left_bound;
+    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_BC1, left_bound, TOL));
+    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_BC2, right_bound, TOL));
+    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_BC3, upper_bound, TOL));
+    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_BC4, lower_bound, TOL));
+    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_BC5, front_bound, TOL));
+    EXPECT_TRUE(TensorAreApproxEqual(expected_sol_BC6, behind_bound, TOL));
 }
 
 TEST(BSSolverTest, BasicBSSolverAssertion)

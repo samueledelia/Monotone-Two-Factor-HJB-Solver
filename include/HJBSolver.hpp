@@ -26,7 +26,7 @@ protected:
 
     Real getS2(size_t i) const;
 
-    Real computeGamma(Real rho, uint32_t i, uint32_t j) const;
+    //Real computeGamma(Real rho, uint32_t i, uint32_t j) const;
 
     //std::vector determineOptimalControl(const Eigen::Tensor<Real, HJB_T_DIM>& W, uint32_t i, uint32_t j); 
     
